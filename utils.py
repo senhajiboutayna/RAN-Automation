@@ -3,7 +3,7 @@ import numpy as np
 
 def get_site_column(df):
     """
-    Identifie automatiquement la colonne qui contient les noms de site.
+    Identifiy automatically the column containing site names.
 
     Args:
         df (pd.DataFrame)
@@ -20,7 +20,7 @@ def get_site_column(df):
 
 def get_sites_list(df):
     """
-    Retourne la liste des sites uniques à partir de la colonne reconnue.
+    Returns the list of unique sites from the recognized column.
 
     Args:
         df (pd.DataFrame)

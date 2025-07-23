@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Dataset Load
-df = pd.read_excel('data/raw/4G_KPI.xlsx')
+df = pd.read_excel('data/4G_KPI.xlsx')
 print(df.head())
 
 # Generate statistical summary
@@ -113,14 +114,94 @@ def summarize_kpis(df, exclude_columns=None):
 
     return summary_df
 
+# ----------- Time aggregation : daily average KPIs -----------
+def aggregate_by_day(df, date_column='Date', exclude_columns=None):
+    """
+    Aggregates KPIs numerically by day.
+
+    Args:
+        df (pd.DataFrame)
+        date_column (str): name of the date column
+        exclude_columns (list): columns to be excluded
+
+    Returns:
+        df_daily (pd.DataFrame) : daily average KPIs
+    """
+    if exclude_columns is None:
+        exclude_columns = []
+
+    df[date_column] = pd.to_datetime(df[date_column], errors='coerce')
+    df = df.dropna(subset=[date_column])  # supprime les dates invalides
+
+    numeric_cols = df.select_dtypes(include=['float', 'int']).columns
+    numeric_cols = [col for col in numeric_cols if col not in exclude_columns]
+
+    df_daily = df.groupby(df[date_column].dt.date)[numeric_cols].mean()
+    df_daily.index = pd.to_datetime(df_daily.index)
+
+    return df_daily
+
+
+# ----------- Daily average by site -----------
+def aggregate_by_site_and_day(df, site_col='eNodeB Name', date_col='Date', exclude_columns=None):
+    """
+    Aggregates data by site and day
+
+    Args:
+        df (pd.DataFrame)
+        site_col (str): name of the site column
+        date_col (str): name of the date column
+        exclude_columns (list): columns to be excluded
+
+    Returns:
+        df_site_day (pd.DataFrame): Multi-indexed DataFrame (site, day) with KPI averages
+    """
+    if exclude_columns is None:
+        exclude_columns = []
+
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+    df = df.dropna(subset=[date_col, site_col])
+
+    numeric_cols = df.select_dtypes(include=['float', 'int']).columns
+    numeric_cols = [col for col in numeric_cols if col not in exclude_columns]
+
+    df_grouped = df.groupby([site_col, df[date_col].dt.date])[numeric_cols].mean()
+    df_grouped.index.set_names(['Site', 'Date'], inplace=True)
+    
+    return df_grouped
+
+def plot_kpi_trend(df_grouped, site, kpi):
+    """
+    Traces the evolution of a KPI for a given site.
+
+    Args:
+        df_grouped (pd.DataFrame): Output of `aggregate_by_site_and_day`
+        site (str): name of the site
+        kpi (str): name of the KPI to plot
+    """
+    df_site = df_grouped.loc[site]
+    df_site[kpi].plot(figsize=(10, 4), title=f"{kpi} trend - Site: {site}")
+    plt.ylabel(kpi)
+    plt.xlabel("Date")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
 # Cleaning
 df_clean = clean_data(df)
-# Columns not to be included
+# Columns to be excluded
 exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
 # Statistical summary of KPIs
 summary_df = summarize_kpis(df_clean, exclude_columns)
 print(summary_df)
 
+daily_agg = aggregate_by_day(df_clean, date_column='Date', exclude_columns=exclude_columns)
+print(daily_agg)
+
 # Save cleaned data
 with pd.ExcelWriter("data/cleaned_kpis.xlsx") as writer:
     df_clean.to_excel(writer, sheet_name="4G_KPIs", index=False)
+
+df_grouped = aggregate_by_site_and_day(df_clean, exclude_columns=exclude_columns)
+plot_kpi_trend(df_grouped, site='CoMPT_AGA1114_999_Stade', kpi='RRC_Succes_Rate')

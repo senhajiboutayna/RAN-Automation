@@ -14,11 +14,11 @@ def set_page_config():
 set_page_config()
 st.title("Analyse des Performances Radio 2G/3G/4G")
 
-# ----------- Upload du fichier Excel -----------
+# ----------- Upload Excel file -----------
 uploaded_file = st.file_uploader("Charger le rapport contenant les KPIs", type=["xlsx"])
 
 if uploaded_file is not None:
-    # Lecture du fichier Excel
+    # Reading the Excel file
     try:
         df = pd.read_excel(uploaded_file)
         st.success("Rapport chargé avec succès !")
@@ -26,13 +26,13 @@ if uploaded_file is not None:
         st.error(f"Erreur lors de la lecture du fichier : {e}")
         st.stop()
     
-    # Nettoyage des données
+    # Data cleaning
     df = clean_data(df)
     
     st.subheader("Aperçu des données")
     st.dataframe(df.head())
 
-    # ----------- Sélection du site -----------
+    # ----------- Selection of the site -----------
     site_column = ["eNodeB Name", "Cell Name", "LocalCell Id"]
     site_col = None
     for col in site_column:
@@ -48,8 +48,8 @@ if uploaded_file is not None:
         st.warning("Aucune colonne de site reconnue dans le fichier.")
         df_site = df
 
-    # ----------- Sélection des KPIs -----------
-    # On exclut les colonnes non numériques
+    # ----------- KPI selection -----------
+    # Exclude non-numeric columns
     #numeric_cols = df_site.select_dtypes(include=['float64', 'int64']).columns.tolist()
     exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
     columns = df.columns
