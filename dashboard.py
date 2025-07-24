@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from preprocessing import clean_data
+from graph_generator import plot_kpi_time_series
 
 def set_page_config():
     st.set_page_config(
@@ -48,7 +49,7 @@ if uploaded_file is not None:
         st.warning("Aucune colonne de site reconnue dans le fichier.")
         df_site = df
 
-    # ----------- KPI selection -----------
+    # ----------- KPI selection + Visualisation -----------
     # Exclude non-numeric columns
     #numeric_cols = df_site.select_dtypes(include=['float64', 'int64']).columns.tolist()
     exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
@@ -58,7 +59,8 @@ if uploaded_file is not None:
     if numeric_cols:
         selected_kpis = st.multiselect("Sélectionner les KPIs à visualiser", numeric_cols)
         if selected_kpis:
-            st.line_chart(df_site[selected_kpis])
+            for kpi in selected_kpis:
+                plot_kpi_time_series(df_site, site_name=selected_site, kpi=kpi)
         else:
             st.info("Sélectionnez au moins un KPI pour afficher le graphique.")
     else:
