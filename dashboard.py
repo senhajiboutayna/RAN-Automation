@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series
 
@@ -49,7 +50,7 @@ if uploaded_file is not None:
         st.warning("Aucune colonne de site reconnue dans le fichier.")
         df_site = df
 
-    # ----------- KPI selection + Visualisation -----------
+    # ----------- KPI selection + Visualisation-----------
     # Exclude non-numeric columns
     #numeric_cols = df_site.select_dtypes(include=['float64', 'int64']).columns.tolist()
     exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
@@ -58,9 +59,18 @@ if uploaded_file is not None:
 
     if numeric_cols:
         selected_kpis = st.multiselect("Sélectionner les KPIs à visualiser", numeric_cols)
+        threshold_input = st.checkbox("Afficher les seuils critiques ?", value=False)
         if selected_kpis:
             for kpi in selected_kpis:
-                plot_kpi_time_series(df_site, site_name=selected_site, kpi=kpi)
+                st.markdown(f"## KPI : {kpi}")
+                threshold_value = None
+                if threshold_input:
+                    # to be improved
+                    threshold_value = st.number_input(f"Saisir le seuil critique pour {kpi}", value=0.0)
+
+            fig = plt.figure()
+            fig = plot_kpi_time_series(df_site, selected_site, kpi, threshold_value)
+            st.pyplot(fig)
         else:
             st.info("Sélectionnez au moins un KPI pour afficher le graphique.")
     else:

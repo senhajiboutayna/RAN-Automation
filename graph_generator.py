@@ -12,6 +12,9 @@ def plot_kpi_time_series(df, site_name, kpi, threshold=None, output_dir='plots')
         kpi: KPI to plot
         threshold: critical threshold to be displayed (optional)
         output_dir: root folder to save plots
+    
+    Returns:
+        fig: Matplotlib figure
     """
     # Data filtering for the site
     site_df = df[df['eNodeB Name'] == site_name].copy()
@@ -29,18 +32,18 @@ def plot_kpi_time_series(df, site_name, kpi, threshold=None, output_dir='plots')
         return
 
     # Plot
-    plt.figure(figsize=(10, 5))
-    plt.plot(site_df['Date'], site_df[kpi], linestyle='-', label=kpi)
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.plot(site_df['Date'], site_df[kpi], linestyle='-', label=kpi)
 
     if threshold is not None:
-        plt.axhline(y=threshold, color='r', linestyle='--', label='Seuil critique')
+        ax.axhline(y=threshold, color='r', linestyle='--', label='Seuil critique')
 
-    plt.title(f"{kpi} - {site_name}")
-    plt.xlabel("Date")
-    plt.ylabel(kpi)
-    plt.xticks(rotation=45)
-    plt.grid(True)
-    plt.legend()
+    ax.set_title(f"{kpi} - {site_name}", fontsize=10)
+    ax.set_xlabel("Date", fontsize=8)
+    ax.set_ylabel(kpi, fontsize=8)
+    ax.grid(True)
+    ax.legend()
+    fig.autofmt_xdate()
     plt.tight_layout()
 
     # Saving
@@ -50,6 +53,8 @@ def plot_kpi_time_series(df, site_name, kpi, threshold=None, output_dir='plots')
     os.makedirs(save_folder, exist_ok=True)
     save_path = os.path.join(save_folder, f"{kpi_safe}.png")
     plt.savefig(save_path)
+
+    return fig
 
 def generate_all_kpi_graphs(df, kpi_list, output_dir='plots', threshold_dict=None):
     """
@@ -72,10 +77,10 @@ def generate_all_kpi_graphs(df, kpi_list, output_dir='plots', threshold_dict=Non
 """
 df = pd.read_excel('data/cleaned_kpis.xlsx', sheet_name='4G_KPIs')
 
-# Nettoyage Date
+# Date Cleaning
 df['Date'] = pd.to_datetime(df['Date'])
 
-# Liste des KPIs
+# List of KPIs
 kpi_list = [
     'RRC Setup Fail', 'RRC_Succes_Rate', 'VoLTE Traffic', '4G PS Traffic(GB)',
     'Erab_Succes_Rate', '4G_Cell_Availability(%)', 'CSSR 4G', '4G_CSR_(HM)',
@@ -84,6 +89,5 @@ kpi_list = [
     'UL interference', 'Average RSRP Reported(dBm)'
 ]
 
-# Génération automatique
 generate_all_kpi_graphs(df, kpi_list)
 """
