@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from preprocessing import clean_data
-from graph_generator import plot_kpi_time_series
+from graph_generator import plot_kpi_time_series, plot_kpi_histogram
 
 def set_page_config():
     st.set_page_config(
@@ -53,13 +53,14 @@ if uploaded_file is not None:
     # ----------- KPI selection + Visualisation-----------
     # Exclude non-numeric columns
     #numeric_cols = df_site.select_dtypes(include=['float64', 'int64']).columns.tolist()
-    exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
+    exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity']
     columns = df.columns
     numeric_cols = [col for col in columns if col not in exclude_columns]
 
     if numeric_cols:
         selected_kpis = st.multiselect("Sélectionner les KPIs à visualiser", numeric_cols)
         threshold_input = st.checkbox("Afficher les seuils critiques ?", value=False)
+        graph_type = st.selectbox("Type de graphique", ["Histogramme", "Graphique temporel"])
         if selected_kpis:
             for kpi in selected_kpis:
                 st.markdown(f"## KPI : {kpi}")
@@ -69,7 +70,12 @@ if uploaded_file is not None:
                     threshold_value = st.number_input(f"Saisir le seuil critique pour {kpi}", value=0.0)
 
             fig = plt.figure()
-            fig = plot_kpi_time_series(df_site, selected_site, kpi, threshold_value)
+
+            if graph_type == "Graphique temporel":
+                fig = plot_kpi_time_series(df_site, selected_site, kpi)
+            elif graph_type == "Histogramme":
+                fig = plot_kpi_histogram(df_site, selected_site, kpi)
+                
             st.pyplot(fig)
         else:
             st.info("Sélectionnez au moins un KPI pour afficher le graphique.")
