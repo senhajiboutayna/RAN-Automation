@@ -2,6 +2,8 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import plotly.express as px
+
 def plot_kpi_time_series(df, site_name, kpi, threshold=None, save_path='plots/timeseries'):
     """
     Generate and save a time graph for a given KPI and a given site.
@@ -32,8 +34,13 @@ def plot_kpi_time_series(df, site_name, kpi, threshold=None, save_path='plots/ti
         return
 
     # Plot
-    fig, ax = plt.subplots(figsize=(6, 3))
-    ax.plot(site_df['Date'], site_df[kpi], linestyle='-', label=kpi)
+    fig, ax = plt.subplots()
+    
+    cell_names = site_df['Cell Name'].unique()
+
+    for cell in cell_names:
+        cell_df = site_df[site_df['Cell Name'] == cell]
+        ax.plot(cell_df['Date'], cell_df[kpi], linestyle='-', label=cell)
 
     if threshold is not None:
         ax.axhline(y=threshold, color='r', linestyle='--', label='Seuil critique')
@@ -91,6 +98,57 @@ kpi_list = [
 
 generate_all_kpi_time_series(df, kpi_list)
 """
+
+def plot_kpi_per_cell_interactive(df, site_name, kpi, selected_cells=None, save_path='plots/timeseries'):
+    """
+    Plot interactive time series of a KPI for each cell of a given site.
+
+    Args:
+        df: full cleaned dataframe
+        site_name: selected eNodeB Name
+        kpi: KPI to plot
+        selected_cells: optional list of selected cell names
+
+    Returns:
+        fig: Plotly figure
+    """
+    site_df = df[df['eNodeB Name'] == site_name].copy()
+    if site_df.empty:
+        print(f"[!] Aucune donnée trouvée pour le site: {site_name}")
+        return
+    
+    site_df['Date'] = pd.to_datetime(site_df['Date'])
+    site_df.sort_values('Date', inplace=True)
+
+    if selected_cells:
+        site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
+
+    fig = px.line(
+        site_df,
+        x="Date",
+        y=kpi,
+        color="Cell Name",
+        title=f"{kpi} - {site_name}",
+        markers=True
+    )
+    fig.update_layout(
+        height=500,
+        margin=dict(l=30, r=30, t=40, b=30),
+        xaxis_title="Date",
+        yaxis_title=kpi,
+        legend_title="Cellule",
+        font=dict(size=12)
+    )
+
+    # Saving
+    site_safe = site_name.replace(" ", "_").replace("/", "_")
+    kpi_safe = kpi.replace(" ", "_").replace("/", "_").replace("%", "pct")
+    save_folder = os.path.join(save_path, site_safe)
+    os.makedirs(save_folder, exist_ok=True)
+    save_path = os.path.join(save_folder, f"{kpi_safe}.png")
+    plt.savefig(save_path)
+
+    return fig
 
 def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
     """

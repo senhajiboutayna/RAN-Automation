@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from preprocessing import clean_data
-from graph_generator import plot_kpi_time_series, plot_kpi_histogram
+from graph_generator import plot_kpi_time_series, plot_kpi_per_cell_interactive, plot_kpi_histogram
 
 def set_page_config():
     st.set_page_config(
@@ -61,6 +61,10 @@ if uploaded_file is not None:
         selected_kpis = st.multiselect("Sélectionner les KPIs à visualiser", numeric_cols)
         threshold_input = st.checkbox("Afficher les seuils critiques ?", value=False)
         graph_type = st.selectbox("Type de graphique", ["Histogramme", "Graphique temporel"])
+
+        available_cells = df_site["Cell Name"].dropna().unique()
+        selected_cells = st.multiselect("Sélectionner les cellules à afficher", available_cells, default=list(available_cells))
+
         if selected_kpis:
             for kpi in selected_kpis:
                 st.markdown(f"## KPI : {kpi}")
@@ -69,14 +73,14 @@ if uploaded_file is not None:
                     # to be improved
                     threshold_value = st.number_input(f"Saisir le seuil critique pour {kpi}", value=0.0)
 
-            fig = plt.figure()
-
             if graph_type == "Graphique temporel":
-                fig = plot_kpi_time_series(df_site, selected_site, kpi)
+                fig = plot_kpi_per_cell_interactive(df, selected_site, kpi, selected_cells)
+                st.plotly_chart(fig, use_container_width=True)
+
             elif graph_type == "Histogramme":
                 fig = plot_kpi_histogram(df_site, selected_site, kpi)
-                
-            st.pyplot(fig)
+                st.pyplot(fig)
+
         else:
             st.info("Sélectionnez au moins un KPI pour afficher le graphique.")
     else:
