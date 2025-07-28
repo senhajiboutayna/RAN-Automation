@@ -6,97 +6,122 @@ def get_kpi_info(kpi_name):
     kpi_definitions = {
         "RRC Setup Fail": {
             "description": "Mesure les échecs d'établissement de connexions RRC (Radio Resource Control) ; indique des problèmes d'accessibilité.",
-            "Catégorie" : "disponibilité",
-            "formula": "",
+            "Catégorie" : "Accessibilité",
+            "formula": "La somme de tous les échecs d'établissement de connexions RRC.",
+            "Unité" : "-",
         },
-        "RRC Setup Success Rate": {
+        "RRC_Success_Rate": {
             "description": "Taux de réussite d'établissement des connexions RRC (Radio Resource Control) entre l'UE et le réseau.",
-            "Catégorie" : "disponibilité",
+            "Catégorie" : "Accessibilité",
             "formula": "RRC Setup Success Rate = (RRC Setup Successes / RRC Setup Attempts) x 100",
+            "Unité" : "%",
         },
         "VoLTE Traffic": {
             "description": "Volume de trafic voix sur LTE ; utile pour analyser la charge VoLTE et l'usage des services voix.",
-            "Catégorie" : "",
+            "Catégorie" : "Performance",
             "formula": "",
+            "Unité" : "",
         },
         "4G PS Traffic": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
-        "ERAB Success Rate": {
-            "description": "",
-            "Catégorie" : "",
-            "formula": "",
+        "Erab_Succes_Rate": {
+            "description": "Taux de réussite de l'établissement des bearers E-RAB, reflète la capacité à établir les connexions data.",
+            "Catégorie" : "Accessibilité",
+            "formula": "Erab Setup Success Rate = (Erab Setup Successes / Erab Setup Attempts) x 100",
+            "Unité" : "%",
         },
         "4G Cell Availability": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
-        "CSSR": {
-            "description": "",
-            "Catégorie" : "",
-            "formula": "",
+        "CSSR 4G": {
+            "description": "Taux global de réussite des tentatives d'établissement d'appel voix (circuit ou VoIP).",
+            "Catégorie" : "Accessibilité",
+            "formula": "CSSR = (Number of Successful Call Setups / Total Number of Call Attempts) x 100",
+            "Unité" : "%",
         },
         "CSR": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
         "DL User throughput": {
             "description": "",
-            "Catégorie" : "",
+            "Catégorie" : "Intégrité",
             "formula": "",
+            "Unité" : "bps",
         },
         "UL User throughput": {
             "description": "",
-            "Catégorie" : "",
+            "Catégorie" : "Intégrité",
             "formula": "",
+            "Unité" : "bps",
         },
         "DL PRB Usage": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
         "CDR": {
-            "description": "",
-            "Catégorie" : "",
-            "formula": "",
+            "description": "Pourcentage d'appels voix interrompus après avoir été établis avec succès. Indicateur de stabilité du service voix.",
+            "Catégorie" : "Stabilité",
+            "formula": "CDR = (Nombre d'appels interrompus / Nombre total d'appels établis) x 100",
+            "Unité" : "%",
         },
         "CSFB Success Rate": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
-        "S1 Success Rate": {
-            "description": "",
-            "Catégorie" : "",
-            "formula": "",
+        "S1_Succes_Rate": {
+            "description": "S1 Setup Success Rate désigne le pourcentage de connexions de signalisation établies avec succès entre les eNodeB et les entités de gestion de la mobilité (MME) via l'interface S1",
+            "Catégorie" : "Accessibilité",
+            "formula": "S1-Setup Success Rate = (S1 Setup Successes / S1 Setup Attempts) x 100",
+            "Unité" : "%",
         },
         "Handover Success Rate": {
             "description": "",
-            "Catégorie" : "",
+            "Catégorie" : "Mobilité",
             "formula": "",
+            "Unité" : "",
         },
         "UL interference": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
         "Average RSRP Reported": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
         "SINR": {
             "description": "",
             "Catégorie" : "",
             "formula": "",
+            "Unité" : "",
         },
     }
 
     return kpi_definitions.get(kpi_name)
+
+
+def categorize_kpi(kpi_name):
+    kpi_info = get_kpi_info(kpi_name)
+    if kpi_info:
+        return kpi_info["Catégorie"]
+    return "Inconnu"
 
 
 kpis_4G = [
@@ -126,3 +151,8 @@ plt.title("Matrice de Corrélation des KPIs 4G", fontsize=14)
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.savefig('plots/heatmap_4G.png')
+
+# Liste des KPIs à afficher ensemble 
+
+['RRC Setup Fail', 'RRC_Succes_Rate']
+['DL User throughput', 'DL User throughput']

@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from preprocessing import clean_data
-from graph_generator import plot_kpi_time_series, plot_kpi_per_cell_interactive, plot_kpi_histogram
+from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series
 
 def set_page_config():
     st.set_page_config(
@@ -60,10 +60,16 @@ if uploaded_file is not None:
     if numeric_cols:
         selected_kpis = st.multiselect("Sélectionner les KPIs à visualiser", numeric_cols)
         threshold_input = st.checkbox("Afficher les seuils critiques ?", value=False)
-        graph_type = st.selectbox("Type de graphique", ["Histogramme", "Graphique temporel"])
+        graph_type = st.selectbox("Type de graphique", ["Histogramme", "Graphique temporel", "Graphique 2 axes (double KPI)"])
 
         available_cells = df_site["Cell Name"].dropna().unique()
-        selected_cells = st.multiselect("Sélectionner les cellules à afficher", available_cells, default=list(available_cells))
+        special_options = ["Toutes les cellules", "Moyenne du site"]
+        cell_options = np.concatenate((special_options, available_cells))
+
+        # Default selection : The first cell available
+        default_selection = [available_cells[0]]
+
+        selected_cells = st.multiselect("Sélectionner les cellules à afficher", cell_options, default=default_selection)
 
         if selected_kpis:
             for kpi in selected_kpis:
@@ -73,9 +79,35 @@ if uploaded_file is not None:
                     # to be improved
                     threshold_value = st.number_input(f"Saisir le seuil critique pour {kpi}", value=0.0)
 
+            # Advanced options for the scale
+            st.markdown("### Modification de l'échelle :")
+
+            normalize = st.checkbox(f"Normaliser les données pour {kpi} (0-1)", key=f"norm_{kpi}")
+            """
+            y_min, y_max = st.slider(
+                f"Définir l'échelle Y pour {kpi}",
+                min_value=float(df_site[kpi].min()),
+                max_value=float(df_site[kpi].max()),
+                value=(float(df_site[kpi].min()), float(df_site[kpi].max())),
+                step=0.1,
+                key=f"slider_{kpi}"
+            )
+            """
+
             if graph_type == "Graphique temporel":
-                fig = plot_kpi_per_cell_interactive(df, selected_site, kpi, selected_cells)
+                fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, normalize=normalize)
                 st.plotly_chart(fig, use_container_width=True)
+            
+            elif graph_type == "Graphique 2 axes (double KPI)":
+                st.markdown("### Sélectionner deux KPIs à comparer")
+                kpi_duo = st.multiselect("Sélectionner exactement 2 KPIs", numeric_cols, max_selections=2)
+
+                if len(kpi_duo) == 2:
+                    fig = plot_dual_axis_kpi_time_series(df, selected_site, kpi_duo[0], kpi_duo[1], selected_cells)
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                else :
+                    st.warning("Veuillez sélectionner exactement 2 KPIs pour générer le graphique à double axe.")
 
             elif graph_type == "Histogramme":
                 fig = plot_kpi_histogram(df_site, selected_site, kpi)
