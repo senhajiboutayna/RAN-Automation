@@ -15,10 +15,22 @@ print(summary)
 colonnes = df.columns.tolist()
 print(colonnes)
 
-
-# ----------- Data cleaning -----------
-
 def clean_data(df):
+    """
+    Route to the correct cleaning function based on the detected columns.
+    """
+    columns = df.columns
+
+    if 'eNodeB Name' in columns and 'Cell Name' in columns and 'LocalCell Id' in columns:
+        return clean_data1(df)  # Nettoyage classique
+    elif 'Time' in columns and 'Game time' in columns and 'Sector' in columns:
+        return clean_data2(df)  # Nouveau format détecté (ex: Stade)
+    else:
+        raise ValueError("Structure du fichier non reconnue. Ajoutez une nouvelle fonction de nettoyage.")
+
+# ----------- Data cleaning 1-----------
+
+def clean_data1(df):
     """
     - Applies a basic cleanup to the DataFrame
     - Removes duplicates
@@ -75,6 +87,46 @@ def clean_data(df):
                 df_clean[col] = df_clean[col]
 
     return df_clean
+
+
+def clean_data2(df):
+    df_clean = df.copy()
+
+    df_clean = df_clean.drop_duplicates()
+    df_clean = df_clean.dropna(axis='columns', how='all')
+
+    # First identify which columns should be numeric (exclude obvious non-numeric columns)
+    non_numeric_cols = ['Time', 'Game time', 'eNodeB Name', 'Cell Name', 'Cell FDD TDD Indication', 'Cell Name', 'sector', 'Beam', 'LocalCell Id', 'eNodeB Function Name', 'Frequency band', 'LTECell Tx and Rx Mode', 'eNodeB identity']
+    numeric_cols = [col for col in df_clean.columns if col not in non_numeric_cols]
+
+    # Remove rows with "/0" in numeric columns before conversion
+    for col in numeric_cols:
+        if df_clean[col].dtype == 'object':
+            # Remove rows with "/0"
+            mask = df_clean[col].astype(str).str.contains('/0', regex=False)
+            df_clean = df_clean[~mask]
+
+    for col in df_clean.columns:
+        if df_clean[col].dtype == 'object':
+            df_clean[col] = (
+                df_clean[col]
+                .astype(str)
+                .str.replace(',', '.', regex=False)
+                .str.replace('%', '', regex=False)
+                .str.replace(' ', '', regex=False)
+                .replace('', np.nan)
+            )
+            try:
+                df_clean[col] = pd.to_numeric(df_clean[col], errors='raise')
+            except ValueError:
+                pass  # Keep as-is if not convertible
+
+    # Standardiser les noms de colonnes si nécessaire
+    if 'Time' in df_clean.columns:
+        df_clean = df_clean.rename(columns={'Time': 'Date'})
+
+    return df_clean
+
 
 # ----------- KPIs in the dataset -----------
 
@@ -189,7 +241,7 @@ def plot_kpi_trend(df_grouped, site, kpi):
 
 
 # Cleaning
-df_clean = clean_data(df)
+df_clean = clean_data1(df)
 # Columns to be excluded
 exclude_columns = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
 # Statistical summary of KPIs

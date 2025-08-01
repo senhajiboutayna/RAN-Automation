@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, normalize=False, y_range=None):
+def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None):
     """
     Plot interactive time series of a KPI for each cell of a given site.
 
@@ -23,26 +23,36 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, normalize=Fals
         print(f"[!] Aucune donnée trouvée pour le site: {site_name}")
         return
     
-    site_df['Date'] = pd.to_datetime(site_df['Date'])
-    site_df.sort_values('Date', inplace=True)
+    ### Key step: managing temporal column names 
+    date_col = None
+    if 'Date' in site_df.columns:
+        date_col = 'Date'
+        site_df[date_col] = pd.to_datetime(site_df[date_col])
+    elif 'Time' in site_df.columns:
+        date_col = 'Time'
+        site_df[date_col] = site_df[date_col].astype(str)
+        site_df[date_col] = site_df[date_col].str.replace(r'(\d{4}-\d{2}-\d{2})(\d{2}:\d{2})', r'\1 \2', regex=True)
+        site_df[date_col] = pd.to_datetime(site_df[date_col], errors='coerce')
+        site_df = site_df.dropna(subset=[date_col])
+    else:
+        raise KeyError("Aucune colonne de date trouvée (ni 'Date' ni 'Time').")
+    
+    site_df.sort_values(date_col, inplace=True)
 
     ### Case : Site average
     if selected_cells and "Moyenne du site" in selected_cells:
-        mean_df = site_df.groupby("Date")[kpi].mean().reset_index()
-        fig = px.line(mean_df, x="Date", y=kpi, title=f"Moyenne {kpi} - {site_name}", markers=True)
+        mean_df = site_df.groupby(date_col)[kpi].mean().reset_index()
+        fig = px.line(mean_df, x=date_col, y=kpi, title=f"Moyenne {kpi} - {site_name}", markers=True)
         fig.update_traces(line=dict(color='green'), name="Moyenne")
     
     else : 
         ### Case : normal or "Toutes les cellules"
         if selected_cells and "Toutes les cellules" not in selected_cells:
             site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
-    
-        if normalize:
-            site_df[kpi] = (site_df[kpi] - site_df[kpi].min()) / (site_df[kpi].max() - site_df[kpi].min())
 
         fig = px.line(
             site_df,
-            x="Date",
+            x=date_col,
             y=kpi,
             color="Cell Name",
             title=f"{kpi} - {site_name}",
@@ -59,6 +69,12 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, normalize=Fals
 
     if y_range:
         fig.update_yaxes(range=[y_range[0], y_range[1]])
+
+    else:
+        min_val = site_df[kpi].min()
+        max_val = site_df[kpi].max()
+        padding = (max_val - min_val) * 0.1 if max_val != min_val else 1
+        fig.update_yaxes(range=[min_val - padding, max_val + padding])
 
     return fig
 
@@ -81,16 +97,26 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
         print(f"[!] Aucune donnée trouvée pour le site: {site_name}")
         return
     
-    site_df['Date'] = pd.to_datetime(site_df['Date'])
-    site_df.sort_values('Date', inplace=True)
+    ### Key step: managing temporal column names 
+    date_col = None
+    if 'Date' in site_df.columns:
+        date_col = 'Date'
+    elif 'Time' in site_df.columns:
+        date_col = 'Time'
+    else:
+        raise KeyError("Aucune colonne de date trouvée (ni 'Date' ni 'Time').")
+    
+    
+    site_df[date_col] = pd.to_datetime(site_df[date_col])
+    site_df.sort_values(date_col, inplace=True)
 
     fig = go.Figure()
 
     if selected_cells and "Moyenne du site" in selected_cells:
-        mean_df = site_df.groupby("Date")[[kpi1, kpi2]].mean().reset_index()
+        mean_df = site_df.groupby(date_col)[[kpi1, kpi2]].mean().reset_index()
 
         fig.add_trace(go.Scatter(
-            x=mean_df["Date"],
+            x=mean_df[date_col],
             y=mean_df[kpi1],
             mode='lines+markers',
             name=f"Moyenne - {kpi1}",
@@ -99,7 +125,7 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
         ))
 
         fig.add_trace(go.Scatter(
-            x=mean_df["Date"],
+            x=mean_df[date_col],
             y=mean_df[kpi2],
             mode='lines+markers',
             name=f"Moyenne - {kpi2}",
@@ -117,7 +143,7 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
 
             fig.add_trace(
                 go.Scatter(
-                    x=cell_data["Date"],
+                    x=cell_data[date_col],
                     y=cell_data[kpi1],
                     mode="lines",
                     name=f"{kpi1} - {cell}",
@@ -128,7 +154,7 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
 
             fig.add_trace(
                 go.Scatter(
-                    x=cell_data["Date"],
+                    x=cell_data[date_col],
                     y=cell_data[kpi2],
                     mode="lines",
                     name=f"{kpi2} - {cell}",

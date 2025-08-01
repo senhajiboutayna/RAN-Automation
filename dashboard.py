@@ -17,6 +17,11 @@ def set_page_config():
 set_page_config()
 st.title("Analyse des Performances Radio 2G/3G/4G")
 
+# Image of stadium
+col_img = st.columns([2, 6, 1]) 
+with col_img[1]: 
+    st.image("img/Stade_MV_Casablanca.jpg", caption="Stade MV Casablanca")
+
 # Layout principal
 left_col, right_col = st.columns([1, 3])
 
@@ -70,15 +75,19 @@ with left_col:
                 selected_cells = st.multiselect("📶 Cellules à afficher", cell_options, default=default_selection)
             else:
                 selected_cells = []
+            
+            use_custom_y_range = st.checkbox("📏 Personnaliser l'échelle Y du KPI ?", value=False)
 
-            if selected_kpis:
-                threshold_input = st.checkbox("⚠️ Afficher les seuils critiques ?", value=False)
-                if threshold_input:
-                    for kpi in selected_kpis:
-                        st.number_input(f"Seuil critique pour {kpi}", value=0.0)
+            custom_y_range = None
+            if use_custom_y_range:
+                y_min = st.number_input("🔽 Valeur minimale Y", value=0.0)
+                y_max = st.number_input("🔼 Valeur maximale Y", value=100.0)
+                custom_y_range = [y_min, y_max]
 
+            threshold_input = st.checkbox("⚠️ Afficher les seuils critiques ?", value=False)
+            if threshold_input:
                 for kpi in selected_kpis:
-                    normalize = st.checkbox(f"🔧 Normaliser {kpi} (0-1)", key=f"norm_{kpi}")
+                    st.number_input(f"Seuil critique pour {kpi}", value=0.0)
 
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
@@ -92,7 +101,7 @@ with right_col:
         if selected_site and graph_type == "Graphique 2 axes (double KPI)":
             kpi_duo = st.multiselect("Sélectionner exactement 2 KPIs", numeric_cols, max_selections=2)
             if len(kpi_duo) == 2:
-                fig = plot_dual_axis_kpi_time_series(df, selected_site, kpi_duo[0], kpi_duo[1], selected_cells)
+                fig = plot_dual_axis_kpi_time_series(df, selected_site, kpi_duo[0], kpi_duo[1], selected_cells, y_range=custom_y_range)
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.warning("Veuillez sélectionner 2 KPIs pour le graphique à deux axes.")
@@ -101,7 +110,7 @@ with right_col:
             for kpi in selected_kpis:
                 st.markdown(f"### 📈 {kpi}")
                 if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, normalize=normalize)
+                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range)
                     st.plotly_chart(fig, use_container_width=True)
                 elif graph_type == "Histogramme":
                     fig = plot_kpi_histogram(df_site, selected_site, kpi)
