@@ -14,6 +14,8 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
         site_name: selected eNodeB Name
         kpi: KPI to plot
         selected_cells: optional list of selected cell names
+        thresholds: dict containing thresholds {kpi1: value, kpi2: value}
+        threshold_directions: dict containing direction ("max" or "min") for each KPI
 
     Returns:
         fig: Plotly figure
@@ -97,7 +99,7 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
 
     return fig
 
-def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=None, normalize=False, y_range=None):
+def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=None, y_range=None, thresholds=None, threshold_directions=None):
     """
     Plot two KPIs with two Y axes (left and right), with per-cell or average display.
 
@@ -107,6 +109,8 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
         kpi1: KPI to plot on the left Y axis
         kpi2: KPI to plot on the right Y axis
         selected_cells: optional list of selected cell names
+        thresholds: dict containing thresholds {kpi1: value, kpi2: value}
+        threshold_directions: dict containing direction ("max" or "min") for each KPI
 
     Returns:
         fig: Plotly figure
@@ -131,6 +135,27 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
 
     fig = go.Figure()
 
+    def add_anomalies(fig, x, y, kpi, axis):
+        if thresholds and kpi in thresholds and threshold_directions:
+            thresh = thresholds[kpi]
+            direction = threshold_directions.get(kpi, "max")
+            if direction == "max":
+                anomalies = y > thresh
+            else:
+                anomalies = y < thresh
+
+            fig.add_trace(go.Scatter(
+                x=x[anomalies],
+                y=y[anomalies],
+                mode='markers+text',
+                name=f"Anomalies {kpi}",
+                yaxis=axis,
+                marker=dict(color='blue' if axis == 'y1' else 'red', size=10, symbol='x'),
+                text=[f"⚠ {val:.2f}" for val in y[anomalies]],
+                textposition='top center',
+                showlegend=True
+            ))
+
     if selected_cells and "Moyenne du site" in selected_cells:
         mean_df = site_df.groupby(date_col)[[kpi1, kpi2]].mean().reset_index()
 
@@ -140,7 +165,7 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
             mode='lines+markers',
             name=f"Moyenne - {kpi1}",
             yaxis='y1',
-            line=dict(color='blue')
+            line=dict(color='#355e3b')
         ))
 
         fig.add_trace(go.Scatter(
@@ -149,8 +174,11 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
             mode='lines+markers',
             name=f"Moyenne - {kpi2}",
             yaxis='y2',
-            line=dict(color='red')
+            line=dict(color='#BAB86C')
         ))
+
+        add_anomalies(fig, mean_df[date_col], mean_df[kpi1], kpi1, 'y1')
+        add_anomalies(fig, mean_df[date_col], mean_df[kpi2], kpi2, 'y2')
     
     else :
         if selected_cells and "Toutes les cellules" not in selected_cells:
@@ -181,6 +209,9 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
                     yaxis="y2"
                 )
             )
+
+            add_anomalies(fig, cell_data[date_col], cell_data[kpi1], kpi1, 'y1')
+            add_anomalies(fig, cell_data[date_col], cell_data[kpi2], kpi2, 'y2')
     
     fig.update_layout(
         title = f"{kpi1} et {kpi2} - {site_name}",

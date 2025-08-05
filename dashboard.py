@@ -2,8 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series
+from threshold_manager import load_threshold_config, save_threshold_config
+
+threshold_config = load_threshold_config()
 
 # ----------- Config -----------
 def set_page_config():
@@ -79,9 +83,17 @@ with left_col:
             use_custom_y_range = st.checkbox("📏 Personnaliser l'échelle Y du KPI ?", value=False)
 
             custom_y_range = None
-            if use_custom_y_range:
-                y_min = st.number_input("🔽 Valeur minimale Y", value=0.0)
-                y_max = st.number_input("🔼 Valeur maximale Y", value=100.0)
+            if use_custom_y_range and selected_kpis:
+                kpi_sample = selected_kpis[0]
+                if kpi_sample in df_site.columns:
+                    y_min_default = float(df_site[kpi_sample].min())
+                    y_max_default = float(df_site[kpi_sample].max())
+                else:
+                    y_min_default = 0.0
+                    y_max_default = 100.0
+                
+                y_min = st.number_input("🔽 Valeur minimale Y", value=y_min_default)
+                y_max = st.number_input("🔼 Valeur maximale Y", value=y_max_default)
                 custom_y_range = [y_min, y_max]
 
             threshold_input = st.checkbox("⚠️ Afficher les anomalies ?", value=False)
@@ -90,20 +102,35 @@ with left_col:
 
             if threshold_input:
                 for kpi in selected_kpis:
+                    existing = threshold_config.get(kpi, {})
+                    default_thresh = existing.get("threshold", 0.0)
+                    default_dir = existing.get("direction", "Maximum à ne pas dépasser")
+
                     col1, col2 = st.columns([2, 2])
                     with col1:
-                        threshold_value = st.number_input(f"Valeur à ne pas dépasser", key=f"thresh_{kpi}", value=0.0)
+                        threshold_value = st.number_input(
+                            f"Valeur à ne pas dépasser", 
+                            key=f"thresh_{kpi}", 
+                            value=float(default_thresh)
+                        )
                     
                     with col2:
                         direction = st.selectbox(
                             f"Type de seuil", 
                             options = ["Maximum à ne pas dépasser", "Minimum à respecter"],
-                            key=f"direction_{kpi}"
+                            key=f"direction_{kpi}",
+                            index=0 if default_dir == "Maximum à ne pas dépasser" else 1
                         )
 
                     thresholds[kpi] = threshold_value
                     threshold_direction[kpi] = direction
 
+                    threshold_config[kpi] = {
+                        "threshold": threshold_value,
+                        "direction": direction
+                    }
+                
+                save_threshold_config(threshold_config)
 
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
@@ -117,7 +144,7 @@ with right_col:
         if selected_site and graph_type == "Graphique 2 axes (double KPI)":
             kpi_duo = st.multiselect("Sélectionner exactement 2 KPIs", numeric_cols, max_selections=2)
             if len(kpi_duo) == 2:
-                fig = plot_dual_axis_kpi_time_series(df, selected_site, kpi_duo[0], kpi_duo[1], selected_cells, y_range=custom_y_range)
+                fig = plot_dual_axis_kpi_time_series(df, selected_site, kpi_duo[0], kpi_duo[1], selected_cells, y_range=custom_y_range, thresholds=thresholds,threshold_directions=threshold_direction)
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.warning("Veuillez sélectionner 2 KPIs pour le graphique à deux axes.")

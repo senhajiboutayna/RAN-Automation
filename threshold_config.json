@@ -1,0 +1,66 @@
+{
+    "RRC Setup Fail": {
+        "threshold": 30.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "CDR_DDRX (%) LH": {
+        "threshold": 0.2,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "RRC_Succes_Rate": {
+        "threshold": 95.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "VoLTE Traffic": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "4G PS Traffic(GB)": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "Average Nb of Users": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "Erab_Succes_Rate": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "4G_Cell_Availability(%)": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "CSSR 4G": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "4G_CSR_(HM)": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "DL PRB Usage(%)": {
+        "threshold": 60.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "4G_CSFB Success Rate(%)(%)": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "S1_Succes_Rate": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "Handover success rate of CA UEs": {
+        "threshold": 98.0,
+        "direction": "Minimum \u00e0 respecter"
+    },
+    "UL interference": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "Average RSRP Reported(dBm)": {
+        "threshold": -100.0,
+        "direction": "Minimum \u00e0 respecter"
+    }
+}
