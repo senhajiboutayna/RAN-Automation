@@ -84,10 +84,26 @@ with left_col:
                 y_max = st.number_input("🔼 Valeur maximale Y", value=100.0)
                 custom_y_range = [y_min, y_max]
 
-            threshold_input = st.checkbox("⚠️ Afficher les seuils critiques ?", value=False)
+            threshold_input = st.checkbox("⚠️ Afficher les anomalies ?", value=False)
+            thresholds = {}
+            threshold_direction = {}
+
             if threshold_input:
                 for kpi in selected_kpis:
-                    st.number_input(f"Seuil critique pour {kpi}", value=0.0)
+                    col1, col2 = st.columns([2, 2])
+                    with col1:
+                        threshold_value = st.number_input(f"Valeur à ne pas dépasser", key=f"thresh_{kpi}", value=0.0)
+                    
+                    with col2:
+                        direction = st.selectbox(
+                            f"Type de seuil", 
+                            options = ["Maximum à ne pas dépasser", "Minimum à respecter"],
+                            key=f"direction_{kpi}"
+                        )
+
+                    thresholds[kpi] = threshold_value
+                    threshold_direction[kpi] = direction
+
 
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
@@ -110,7 +126,7 @@ with right_col:
             for kpi in selected_kpis:
                 st.markdown(f"### 📈 {kpi}")
                 if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range)
+                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi))
                     st.plotly_chart(fig, use_container_width=True)
                 elif graph_type == "Histogramme":
                     fig = plot_kpi_histogram(df_site, selected_site, kpi)

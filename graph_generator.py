@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None):
+def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None):
     """
     Plot interactive time series of a KPI for each cell of a given site.
 
@@ -75,6 +75,25 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None):
         max_val = site_df[kpi].max()
         padding = (max_val - min_val) * 0.1 if max_val != min_val else 1
         fig.update_yaxes(range=[min_val - padding, max_val + padding])
+    
+    if threshold and threshold_direction:
+        if threshold_direction == "Maximum à ne pas dépasser":
+            anomalies = site_df[site_df[kpi] > threshold]
+        elif threshold_direction == "Minimum à respecter":
+            anomalies = site_df[site_df[kpi] < threshold]
+        fig.add_hline(y=threshold, line_dash="dash", line_color="red", annotation_text="Seuil", annotation_position="top left")
+        fig.add_trace(
+            go.Scatter(
+                x = anomalies[date_col],
+                y = anomalies[kpi],
+                mode = "markers+text",
+                name = "Anomalies",
+                marker = dict(color = "red", size = 10, symbol = "x"),
+                text = [f"⚠ {v:.2f}" for v in anomalies[kpi]],
+                textposition='top center',
+                showlegend=True
+            )
+        )
 
     return fig
 
