@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series
-from threshold_manager import load_threshold_config, save_threshold_config
+from anomaly_detector import load_threshold_config, save_threshold_config, detect_zscore_anomalies
 
 threshold_config = load_threshold_config()
 
@@ -36,7 +36,7 @@ selected_site = None
 selected_kpis = []
 normalize = True
 
-# ----------- KPI Selection -----------
+# ----------- Left Side -----------
 with left_col:
     st.markdown("### 📥 Chargement du rapport")
     uploaded_file = st.file_uploader("Charger le rapport contenant les KPIs", type=["xlsx"])
@@ -131,11 +131,16 @@ with left_col:
                     }
                 
                 save_threshold_config(threshold_config)
+            
+            use_zscore = st.checkbox("📉 Détection Z-score", value=False)
+            zscore_threshold = None
+            if use_zscore:
+                zscore_threshold = st.slider("Seuil Z-score", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
 
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
 
-# ----------- Graphe Visualisation -----------
+# ----------- Right Side -----------
 with right_col:
     if uploaded_file is not None and df is not None:
         st.subheader("Aperçu des données")
@@ -153,7 +158,7 @@ with right_col:
             for kpi in selected_kpis:
                 st.markdown(f"### 📈 {kpi}")
                 if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi))
+                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
                     st.plotly_chart(fig, use_container_width=True)
                 elif graph_type == "Histogramme":
                     fig = plot_kpi_histogram(df_site, selected_site, kpi)

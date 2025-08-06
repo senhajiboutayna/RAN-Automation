@@ -4,11 +4,11 @@
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "CDR_DDRX (%) LH": {
-        "threshold": 0.2,
+        "threshold": 1,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "RRC_Succes_Rate": {
-        "threshold": 95.0,
+        "threshold": 98.0,
         "direction": "Minimum \u00e0 respecter"
     },
     "VoLTE Traffic": {
@@ -40,7 +40,7 @@
         "direction": "Minimum \u00e0 respecter"
     },
     "DL PRB Usage(%)": {
-        "threshold": 60.0,
+        "threshold": 80.0,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "4G_CSFB Success Rate(%)(%)": {
@@ -62,5 +62,13 @@
     "Average RSRP Reported(dBm)": {
         "threshold": -100.0,
         "direction": "Minimum \u00e0 respecter"
+    },
+    "VoLTE Voice Call Duration(h)": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "Downlink EARFCN": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     }
 }

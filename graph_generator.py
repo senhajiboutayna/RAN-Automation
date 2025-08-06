@@ -5,7 +5,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None):
+from anomaly_detector import detect_zscore_anomalies
+
+def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None, use_zscore=False, zscore_threshold=3.0):
     """
     Plot interactive time series of a KPI for each cell of a given site.
 
@@ -92,6 +94,23 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
                 name = "Anomalies",
                 marker = dict(color = "red", size = 10, symbol = "x"),
                 text = [f"⚠ {v:.2f}" for v in anomalies[kpi]],
+                textposition='top center',
+                showlegend=True
+            )
+        )
+    
+    if use_zscore :
+        anomalies = detect_zscore_anomalies(site_df[kpi], zscore_threshold)
+        site_df["Z_Anomaly"] = anomalies
+
+        fig.add_trace(
+            go.Scatter(
+                x=site_df[date_col][anomalies],
+                y=site_df[kpi][anomalies],
+                mode='markers+text',
+                name='Z-score Anomalie',
+                marker=dict(color='orange', size=9, symbol='triangle-up'),
+                text=[f"Z⚠ {v:.2f}" for v in site_df[kpi][anomalies]],
                 textposition='top center',
                 showlegend=True
             )
