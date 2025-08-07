@@ -261,101 +261,6 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
     
     return fig
 
-def plot_kpi_time_series1(df, site_name, kpi, threshold=None, save_path='plots/timeseries'):
-    """
-    Generate and save a time graph for a given KPI and a given site.
-    
-    Args:
-        df: DataFrame containing all data (unfiltered)
-        site_name: name of site to filter
-        kpi: KPI to plot
-        threshold: critical threshold to be displayed (optional)
-        save_path: root folder to save plots
-    
-    Returns:
-        fig: Matplotlib figure
-    """
-    # Data filtering for the site
-    site_df = df[df['eNodeB Name'] == site_name].copy()
-    if site_df.empty:
-        print(f"[!] Aucune donnée trouvée pour le site: {site_name}")
-        return
-    
-    # Date Conversion
-    site_df['Date'] = pd.to_datetime(site_df['Date'])
-    site_df.sort_values('Date', inplace=True)
-
-    # Verification that the KPI exists
-    if kpi not in site_df.columns:
-        print(f"[!] KPI non trouvé: {kpi}")
-        return
-
-    # Plot
-    fig, ax = plt.subplots()
-    
-    cell_names = site_df['Cell Name'].unique()
-
-    for cell in cell_names:
-        cell_df = site_df[site_df['Cell Name'] == cell]
-        ax.plot(cell_df['Date'], cell_df[kpi], linestyle='-', label=cell)
-
-    if threshold is not None:
-        ax.axhline(y=threshold, color='r', linestyle='--', label='Seuil critique')
-
-    ax.set_title(f"{kpi} - {site_name}", fontsize=10)
-    ax.set_xlabel("Date", fontsize=8)
-    ax.set_ylabel(kpi, fontsize=8)
-    ax.grid(True)
-    ax.legend()
-    fig.autofmt_xdate()
-    plt.tight_layout()
-
-    # Saving
-    site_safe = site_name.replace(" ", "_").replace("/", "_")
-    kpi_safe = kpi.replace(" ", "_").replace("/", "_").replace("%", "pct")
-    save_folder = os.path.join(save_path, site_safe)
-    os.makedirs(save_folder, exist_ok=True)
-    save_path = os.path.join(save_folder, f"{kpi_safe}.png")
-    plt.savefig(save_path)
-
-    return fig
-
-def generate_all_kpi_time_series(df, kpi_list, save_path='plots/timeseries', threshold_dict=None):
-    """
-    Generates time series graphs for all sites and KPIs.
-    
-    Args:
-        df: Global DataFrame
-        kpi_list: List of KPIs to plot
-        save_path: Output folder
-        threshold_dict: Dictionary {kpi_name: seuil} (optional)
-    """
-    all_sites = df['eNodeB Name'].unique()
-    for site in all_sites:
-        for kpi in kpi_list:
-            threshold = None
-            if threshold_dict and kpi in threshold_dict:
-                threshold = threshold_dict[kpi]
-            plot_kpi_time_series1(df, site, kpi, threshold, save_path)
-
-"""
-df = pd.read_excel('data/cleaned_kpis.xlsx', sheet_name='4G_KPIs')
-
-# Date Cleaning
-df['Date'] = pd.to_datetime(df['Date'])
-
-# List of KPIs
-kpi_list = [
-    'RRC Setup Fail', 'RRC_Succes_Rate', 'VoLTE Traffic', '4G PS Traffic(GB)',
-    'Erab_Succes_Rate', '4G_Cell_Availability(%)', 'CSSR 4G', '4G_CSR_(HM)',
-    'DL User throughput', 'UL User throughput', 'DL PRB Usage(%)', 'CDR_DDRX (%) LH',
-    '4G_CSFB Success Rate(%)(%)', 'S1_Succes_Rate', 'Handover success rate of CA UEs',
-    'UL interference', 'Average RSRP Reported(dBm)'
-]
-
-generate_all_kpi_time_series(df, kpi_list)
-"""
-
 def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
     """
     Generate and save the histogram of values for a given KPI.
@@ -394,33 +299,133 @@ def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
 
     return fig
 
-def plot_all_kpis_histogram(df, site_name, save_path=None):
+def plot_kpi_bar_chart(df, site_name, kpi, selected_cells = None):
     """
-    Generates histogram graphs for all sites and KPIs.
+    Time bar chart of a KPI.
 
-    - df : cleaned DataFrame
-    - site_name : name of site to filter
-    - save_path : path to save figures (optional)
+    Args:
+        df: full cleaned dataframe
+        site_name: selected eNodeB Name
+        kpi: KPI to plot
+        
+    Returns:
+        fig: Plotly figure
     """
-    df_site = df[df["eNodeB Name"] == site_name] if "eNodeB Name" in df.columns else df
+    site_df = df[df['eNodeB Name'] == site_name].copy()
+    if site_df.empty:
+        print(f"[!] Aucune donnée trouvée pour le site: {site_name}")
+        return
+    
+    ### Key step: managing temporal column names 
+    date_col = None
+    if 'Date' in site_df.columns:
+        date_col = 'Date'
+        site_df[date_col] = pd.to_datetime(site_df[date_col])
+    elif 'Time' in site_df.columns:
+        date_col = 'Time'
+        site_df[date_col] = site_df[date_col].astype(str)
+        site_df[date_col] = site_df[date_col].str.replace(r'(\d{4}-\d{2}-\d{2})(\d{2}:\d{2})', r'\1 \2', regex=True)
+        site_df[date_col] = pd.to_datetime(site_df[date_col], errors='coerce')
+        site_df = site_df.dropna(subset=[date_col])
+    else:
+        raise KeyError("Aucune colonne de date trouvée (ni 'Date' ni 'Time').")
+    
+    site_df.sort_values(date_col, inplace=True)
 
-    # Exclude non-numeric and non-KPI columns
-    exclude_cols = ['Date', 'eNodeB Name', 'eNodeB Function Name', 'Cell Name', 'LocalCell Id', 'Cell FDD TDD Indication', 'Integrity', 'Average Nb of Users', 'Active User']
-    numeric_kpis = [col for col in df_site.columns if col not in exclude_cols and pd.api.types.is_numeric_dtype(df_site[col])]
+    # plot :
 
-    for kpi in numeric_kpis:
-        values = df_site[kpi].dropna()
+    if selected_cells and "Toutes les cellules" not in selected_cells:
+        site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
 
-        if values.empty:
-            continue
+        fig = px.bar(
+                site_df,
+                x=date_col, 
+                y=kpi, 
+        )
+    
+    fig.update_traces(width=0.5)
 
-        all_sites = df['eNodeB Name'].unique()
-        for site in all_sites:
-                threshold = None
-                plot_kpi_histogram(df, site, kpi, save_path)
+    fig.update_layout(
+        height=500,
+        title=f"Graphique à barres - {kpi}",
+        xaxis_title="Date",
+        yaxis_title=kpi,
+        margin=dict(l=30, r=30, t=50, b=30),
+        xaxis_tickangle=-45
+    )
 
-"""
-df = pd.read_excel('data/cleaned_kpis.xlsx', sheet_name='4G_KPIs')
-plot_kpi_histogram(df, 'CoMPT_AGA1114_999_Stade', 'DL User throughput')
-plt.show()
-"""
+    return fig
+
+def plot_kpi_anomaly_scatter(df, site_name, kpi, selected_cells = None, threshold=None, 
+                             threshold_direction=None, use_zscore=False, zscore_threshold=3.0,
+                             use_moving_avg=False, moving_avg_window=5, moving_avg_thresh=2.0):
+    """
+    Scatter plot KPI vs Date with color according to anomaly type.
+
+    Args:
+        df: full dataframe
+        site_name: site name
+        kpi: KPI to plot
+        threshold: static threshold
+        threshold_direction: threshold directito enable Z-scorepour activer Z-score
+        zscore_threshold: Z-score threshold value
+        use_moving_avg: bool to enable moving average
+        moving_avg_window: window size for moving average
+        moving_avg_thresh: deviation threshold
+    """
+    site_df = df[df['eNodeB Name'] == site_name].copy()
+    if 'Date' in site_df.columns:
+        date_col = 'Date'
+    elif 'Time' in site_df.columns:
+        date_col = 'Time'
+    else:
+        raise KeyError("Colonne de temps manquante (Date ou Time)")
+
+    site_df[date_col] = pd.to_datetime(site_df[date_col], errors='coerce')
+    site_df = site_df.dropna(subset=[date_col])
+    site_df.sort_values(date_col, inplace=True)
+
+    site_df["Anomaly Type"] = "Normal"
+
+    if threshold and threshold_direction:
+        if threshold_direction == "Maximum à ne pas dépasser":
+            site_df.loc[site_df[kpi] > threshold, "Anomaly Type"] = "Seuil dépassé"
+        elif threshold_direction == "Minimum à respecter":
+            site_df.loc[site_df[kpi] < threshold, "Anomaly Type"] = "Sous le minimum"
+
+    if use_zscore:
+        from anomaly_detector import detect_zscore_anomalies
+        z_anomalies = detect_zscore_anomalies(site_df[kpi], zscore_threshold)
+        site_df.loc[z_anomalies, "Anomaly Type"] = "Z-score"
+
+    if use_moving_avg:
+        from anomaly_detector import detect_moving_average_anomalies
+        ma_anomalies = detect_moving_average_anomalies(site_df[kpi], window=moving_avg_window, threshold=moving_avg_thresh)
+        site_df.loc[ma_anomalies, "Anomaly Type"] = "Moving Average"
+    
+    if selected_cells and "Toutes les cellules" not in selected_cells:
+        site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
+    
+        fig = px.scatter(
+            site_df,
+            x=date_col,
+            y=kpi,
+            color="Anomaly Type",
+            title=f"Scatter Plot Anomalies - {kpi}",
+            color_discrete_map={
+                "Normal": "green",
+                "Seuil dépassé": "red",
+                "Sous le minimum": "red",
+                "Z-score": "orange",
+                "Moving Average": "blue"
+            },
+            hover_data=[kpi]
+        )
+
+    fig.update_layout(
+        height=500,
+        xaxis_title="Date",
+        yaxis_title=kpi
+    )
+
+    return fig

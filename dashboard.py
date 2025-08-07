@@ -4,8 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from preprocessing import clean_data
-from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series
-from anomaly_detector import load_threshold_config, save_threshold_config, detect_zscore_anomalies
+from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series, plot_kpi_bar_chart, plot_kpi_anomaly_scatter
+from anomaly_detector import load_threshold_config, save_threshold_config
 
 threshold_config = load_threshold_config()
 
@@ -42,7 +42,8 @@ with left_col:
     uploaded_file = st.file_uploader("Charger le rapport contenant les KPIs", type=["xlsx"])
 
     graph_type = st.selectbox("📊 Type de graphique", 
-        ["Histogramme", "Graphique temporel", "Graphique 2 axes (double KPI)"])
+        ["Graphique temporel", "Graphique 2 axes (double KPI)", "Graphique à barres", "Scatter Anomalies", "Histogramme"]
+    )
 
     if uploaded_file is not None:
         try:
@@ -168,6 +169,24 @@ with right_col:
                 if graph_type == "Graphique temporel":
                     fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold, use_moving_avg=use_moving_avg, moving_avg_window=moving_avg_window, moving_avg_thresh=moving_avg_thresh)
                     st.plotly_chart(fig, use_container_width=True)
+
                 elif graph_type == "Histogramme":
                     fig = plot_kpi_histogram(df_site, selected_site, kpi)
                     st.pyplot(fig)
+
+                elif graph_type == "Graphique à barres":
+                    fig = plot_kpi_bar_chart(df_site, selected_site, kpi, selected_cells)
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                elif graph_type == "Scatter Anomalies":
+                    for kpi in selected_kpis:
+                        fig = plot_kpi_anomaly_scatter(df, selected_site, kpi, selected_cells,
+                            threshold=thresholds.get(kpi),
+                            threshold_direction=threshold_direction.get(kpi),
+                            use_zscore=use_zscore,
+                            zscore_threshold=zscore_threshold,
+                            use_moving_avg=use_moving_avg,
+                            moving_avg_window=moving_avg_window,
+                            moving_avg_thresh=moving_avg_thresh
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
