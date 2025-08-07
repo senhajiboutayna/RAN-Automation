@@ -261,7 +261,7 @@ def plot_dual_axis_kpi_time_series(df, site_name, kpi1, kpi2, selected_cells=Non
     
     return fig
 
-def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
+def plot_kpi_histogram(df, site_name, kpi, selected_cells=None):
     """
     Generate and save the histogram of values for a given KPI.
     
@@ -271,8 +271,7 @@ def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
         kpi: KPI to plot
     """
 
-    df = df[df["eNodeB Name"] == site_name] if "eNodeB Name" in df.columns else df
-    values = df[kpi]
+    site_df = df[df["eNodeB Name"] == site_name] if "eNodeB Name" in df.columns else df
 
     # Verification that the KPI exists
     if kpi not in df.columns:
@@ -280,22 +279,16 @@ def plot_kpi_histogram(df, site_name, kpi, save_path='plots/histograms'):
         return
     
     # Plot
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.hist(values, bins=30, color='steelblue', edgecolor='black', alpha=0.7)
+    if selected_cells and "Toutes les cellules" not in selected_cells:
+        site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
 
-    ax.set_title(f"{kpi} - {site_name}", fontsize=10)
-    ax.set_xlabel(kpi, fontsize=8)
-    ax.set_ylabel("Fréquence", fontsize=8)
-    ax.grid(True)
-    ax.legend()
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.hist(site_df[kpi], bins=30, color='steelblue', edgecolor='black', alpha=0.7)
 
-    # Saving
-    site_safe = site_name.replace(" ", "_").replace("/", "_")
-    kpi_safe = kpi.replace(" ", "_").replace("/", "_").replace("%", "pct")
-    save_folder = os.path.join(save_path, site_safe)
-    os.makedirs(save_folder, exist_ok=True)
-    save_path = os.path.join(save_folder, f"{kpi_safe}.png")
-    plt.savefig(save_path)
+        ax.set_title(f"{kpi} - {site_name}", fontsize=10)
+        ax.set_xlabel(kpi, fontsize=8)
+        ax.set_ylabel("Fréquence", fontsize=8)
+        ax.legend()
 
     return fig
 

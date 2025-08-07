@@ -171,7 +171,7 @@ with right_col:
                     st.plotly_chart(fig, use_container_width=True)
 
                 elif graph_type == "Histogramme":
-                    fig = plot_kpi_histogram(df_site, selected_site, kpi)
+                    fig = plot_kpi_histogram(df_site, selected_site, kpi, selected_cells)
                     st.pyplot(fig)
 
                 elif graph_type == "Graphique à barres":
