@@ -137,6 +137,14 @@ with left_col:
             if use_zscore:
                 zscore_threshold = st.slider("Seuil Z-score", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
 
+            use_moving_avg = st.checkbox("📈 Détection Moving Average", value=False)
+            if use_moving_avg:
+                moving_avg_window = st.slider("Fenêtre moyenne mobile", min_value=3, max_value=21, value=5, step=2)
+                moving_avg_thresh = st.slider("Seuil d'écart (σ)", min_value=0.5, max_value=5.0, value=2.0, step=0.1)
+            else:
+                moving_avg_window = None
+                moving_avg_thresh = None
+
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
 
@@ -158,7 +166,7 @@ with right_col:
             for kpi in selected_kpis:
                 st.markdown(f"### 📈 {kpi}")
                 if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
+                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold, use_moving_avg=use_moving_avg, moving_avg_window=moving_avg_window, moving_avg_thresh=moving_avg_thresh)
                     st.plotly_chart(fig, use_container_width=True)
                 elif graph_type == "Histogramme":
                     fig = plot_kpi_histogram(df_site, selected_site, kpi)

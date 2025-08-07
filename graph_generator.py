@@ -5,9 +5,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from anomaly_detector import detect_zscore_anomalies
+from anomaly_detector import detect_zscore_anomalies, detect_moving_average_anomalies
 
-def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None, use_zscore=False, zscore_threshold=3.0):
+def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None, use_zscore=False, zscore_threshold=3.0, use_moving_avg=False, moving_avg_window=5, moving_avg_thresh=2.0):
     """
     Plot interactive time series of a KPI for each cell of a given site.
 
@@ -111,6 +111,23 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
                 name='Z-score Anomalie',
                 marker=dict(color='orange', size=9, symbol='triangle-up'),
                 text=[f"Z⚠ {v:.2f}" for v in site_df[kpi][anomalies]],
+                textposition='top center',
+                showlegend=True
+            )
+        )
+    
+    if use_moving_avg :
+        anomalies = detect_moving_average_anomalies(site_df[kpi], window=moving_avg_window, threshold=moving_avg_thresh)
+        site_df["MA_Anomaly"] = anomalies
+
+        fig.add_trace(
+            go.Scatter(
+                x=site_df[date_col][anomalies],
+                y=site_df[kpi][anomalies],
+                mode='markers+text',
+                name='MA Anomalie',
+                marker=dict(color='purple', size=9, symbol='star'),
+                text=[f"MA⚠ {v:.2f}" for v in site_df[kpi][anomalies]],
                 textposition='top center',
                 showlegend=True
             )

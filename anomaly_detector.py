@@ -43,3 +43,24 @@ def detect_zscore_anomalies(series, threshold):
     z_scores = (series - mean) / std
     anomalies = z_scores.abs() > threshold
     return anomalies
+
+
+def detect_moving_average_anomalies(series, window=5, threshold=2.0):
+    """
+    Detects anomalies based on a moving average.
+
+    Args:
+        series (pd.Series): time series of the KPI.
+        window (int): window size for the moving average.
+        threshold (float): number of standard deviations tolerated before declaring an anomaly.
+
+    Returns:
+        pd.Series: Boolean for each point indicating whether it is an anomaly.
+    """
+    rolling_mean = series.rolling(window=window, center=True).mean()
+    rolling_std = series.rolling(window=window, center=True).std()
+
+    deviation = abs(series - rolling_mean)
+    anomalies = deviation > (threshold * rolling_std)
+
+    return anomalies.fillna(False)
