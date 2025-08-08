@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series, plot_kpi_bar_chart, plot_kpi_anomaly_scatter
 from anomaly_detector import load_threshold_config, save_threshold_config
+from report_generator import generate_anomaly_summary, generate_pdf_report
 
 threshold_config = load_threshold_config()
 
@@ -138,14 +139,6 @@ with left_col:
             if use_zscore:
                 zscore_threshold = st.slider("Seuil Z-score", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
 
-            use_moving_avg = st.checkbox("📈 Détection Moving Average", value=False)
-            if use_moving_avg:
-                moving_avg_window = st.slider("Fenêtre moyenne mobile", min_value=3, max_value=21, value=5, step=2)
-                moving_avg_thresh = st.slider("Seuil d'écart (σ)", min_value=0.5, max_value=5.0, value=2.0, step=0.1)
-            else:
-                moving_avg_window = None
-                moving_avg_thresh = None
-
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
 
@@ -167,7 +160,7 @@ with right_col:
             for kpi in selected_kpis:
                 st.markdown(f"### 📈 {kpi}")
                 if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold, use_moving_avg=use_moving_avg, moving_avg_window=moving_avg_window, moving_avg_thresh=moving_avg_thresh)
+                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
                     st.plotly_chart(fig, use_container_width=True)
 
                 elif graph_type == "Histogramme":
@@ -184,9 +177,31 @@ with right_col:
                             threshold=thresholds.get(kpi),
                             threshold_direction=threshold_direction.get(kpi),
                             use_zscore=use_zscore,
-                            zscore_threshold=zscore_threshold,
-                            use_moving_avg=use_moving_avg,
-                            moving_avg_window=moving_avg_window,
-                            moving_avg_thresh=moving_avg_thresh
+                            zscore_threshold=zscore_threshold
                         )
                         st.plotly_chart(fig, use_container_width=True)
+
+
+st.markdown("### Générer le rapport d'anomalies")
+uploaded_images = st.file_uploader(
+    "📷 Charger les images PNG exportées", 
+    type=["png"], 
+    accept_multiple_files=True
+)
+
+if uploaded_images and selected_kpis:
+        kpi = selected_kpis[0]
+        threshold = thresholds.get(kpi, None)
+        direction = threshold_direction.get(kpi, None)
+        summary_text = generate_anomaly_summary(df_site, kpi, threshold, direction)
+        image_paths = [img for img in uploaded_images]
+
+        pdf_path = generate_pdf_report(selected_site, kpi, selected_cells, summary_text, image_paths)
+        
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="📥 Télécharger le rapport PDF",
+                data=f,
+                file_name=f"rapport_{selected_site}_{kpi}.pdf",
+                mime="application/pdf"
+            )

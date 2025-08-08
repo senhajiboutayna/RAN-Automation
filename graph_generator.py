@@ -5,9 +5,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from anomaly_detector import detect_zscore_anomalies, detect_moving_average_anomalies
+from anomaly_detector import detect_zscore_anomalies
 
-def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None, use_zscore=False, zscore_threshold=3.0, use_moving_avg=False, moving_avg_window=5, moving_avg_thresh=2.0):
+def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, threshold=None, threshold_direction=None, use_zscore=False, zscore_threshold=3.0):
     """
     Plot interactive time series of a KPI for each cell of a given site.
 
@@ -68,7 +68,13 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
         xaxis_title="Date",
         yaxis_title=kpi,
         legend_title="Cellule",
-        font=dict(size=12)
+        font=dict(color="black", size=14),
+        xaxis=dict(
+            tickformat="%Y-%m-%d",  # ou %b %d, %H:%M pour plus court
+            tickangle=-45
+        ),
+        paper_bgcolor="white",
+        plot_bgcolor="white"
     )
 
     if y_range:
@@ -116,22 +122,6 @@ def plot_kpi_time_series(df, site_name, kpi, selected_cells=None, y_range=None, 
             )
         )
     
-    if use_moving_avg :
-        anomalies = detect_moving_average_anomalies(site_df[kpi], window=moving_avg_window, threshold=moving_avg_thresh)
-        site_df["MA_Anomaly"] = anomalies
-
-        fig.add_trace(
-            go.Scatter(
-                x=site_df[date_col][anomalies],
-                y=site_df[kpi][anomalies],
-                mode='markers+text',
-                name='MA Anomalie',
-                marker=dict(color='purple', size=9, symbol='star'),
-                text=[f"MA⚠ {v:.2f}" for v in site_df[kpi][anomalies]],
-                textposition='top center',
-                showlegend=True
-            )
-        )
 
     return fig
 
@@ -387,14 +377,8 @@ def plot_kpi_anomaly_scatter(df, site_name, kpi, selected_cells = None, threshol
             site_df.loc[site_df[kpi] < threshold, "Anomaly Type"] = "Sous le minimum"
 
     if use_zscore:
-        from anomaly_detector import detect_zscore_anomalies
         z_anomalies = detect_zscore_anomalies(site_df[kpi], zscore_threshold)
         site_df.loc[z_anomalies, "Anomaly Type"] = "Z-score"
-
-    if use_moving_avg:
-        from anomaly_detector import detect_moving_average_anomalies
-        ma_anomalies = detect_moving_average_anomalies(site_df[kpi], window=moving_avg_window, threshold=moving_avg_thresh)
-        site_df.loc[ma_anomalies, "Anomaly Type"] = "Moving Average"
     
     if selected_cells and "Toutes les cellules" not in selected_cells:
         site_df = site_df[site_df['Cell Name'].isin(selected_cells)]
