@@ -70,5 +70,13 @@
     "Downlink EARFCN": {
         "threshold": 0.0,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "DL User throughput": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "Active User": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     }
 }

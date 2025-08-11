@@ -51,3 +51,30 @@ def generate_pdf_report(site_name, kpi_name, cell_name, summary_text, image_file
     doc = SimpleDocTemplate(temp_path, pagesize=A4)
     doc.build(elements)
     return temp_path
+
+
+"""
+st.markdown("### Générer le rapport d'anomalies")
+uploaded_images = st.file_uploader(
+    "📷 Charger les images PNG exportées", 
+    type=["png"], 
+    accept_multiple_files=True
+)
+
+if uploaded_images and selected_kpis:
+        kpi = selected_kpis[0]
+        threshold = thresholds.get(kpi, None)
+        direction = threshold_direction.get(kpi, None)
+        summary_text = generate_anomaly_summary(df_site, kpi, threshold, direction)
+        image_paths = [img for img in uploaded_images]
+
+        pdf_path = generate_pdf_report(selected_site, kpi, selected_cells, summary_text, image_paths)
+        
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="📥 Télécharger le rapport PDF",
+                data=f,
+                file_name=f"rapport_{selected_site}_{kpi}.pdf",
+                mime="application/pdf"
+            )
+"""

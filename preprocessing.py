@@ -3,18 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Dataset Load
-df = pd.read_excel('data/4G_KPI.xlsx')
-print(df.head())
-
-# Generate statistical summary
-summary = df.describe(include=[np.number]).transpose().round(2)
-print(summary)
-
-# Columns
-colonnes = df.columns.tolist()
-print(colonnes)
-
 def clean_data(df):
     """
     Route to the correct cleaning function based on the detected columns.
@@ -49,7 +37,7 @@ def clean_data1(df):
     df_clean = df.copy()
 
     # Deleting duplicates
-    df_clean.drop_duplicates()
+    df_clean = df_clean.drop_duplicates()
 
     # Delete rows and columns if all values are missing
     df_clean = df_clean.dropna(axis='columns', how='all')
@@ -85,6 +73,8 @@ def clean_data1(df):
                 print(f"Could not convert column {col} to numeric: {e}")
                 # Keep original if conversion fails
                 df_clean[col] = df_clean[col]
+    
+    df_clean.reset_index(drop=True, inplace=True)
 
     return df_clean
 
@@ -240,6 +230,18 @@ def plot_kpi_trend(df_grouped, site, kpi):
     plt.show()
 
 
+"""
+# Dataset Load
+df = pd.read_excel('data/4G_KPI.xlsx')
+print(df.head())
+
+# Generate statistical summary
+summary = df.describe(include=[np.number]).transpose().round(2)
+print(summary)
+
+# Columns
+colonnes = df.columns.tolist()
+print(colonnes)
 # Cleaning
 df_clean = clean_data1(df)
 # Columns to be excluded
@@ -257,3 +259,4 @@ with pd.ExcelWriter("data/cleaned_kpis.xlsx") as writer:
 
 df_grouped = aggregate_by_site_and_day(df_clean, exclude_columns=exclude_columns)
 plot_kpi_trend(df_grouped, site='CoMPT_AGA1114_999_Stade', kpi='RRC_Succes_Rate')
+"""

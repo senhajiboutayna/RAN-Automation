@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series, plot_kpi_bar_chart, plot_kpi_anomaly_scatter
 from anomaly_detector import load_threshold_config, save_threshold_config
-from report_generator import generate_anomaly_summary, generate_pdf_report
 
 threshold_config = load_threshold_config()
 
@@ -157,51 +156,47 @@ with right_col:
                 st.warning("Veuillez sélectionner 2 KPIs pour le graphique à deux axes.")
         
         elif selected_kpis:
-            for kpi in selected_kpis:
-                st.markdown(f"### 📈 {kpi}")
-                if graph_type == "Graphique temporel":
-                    fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi), threshold_direction=threshold_direction.get(kpi), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
-                    st.plotly_chart(fig, use_container_width=True)
+            # Define how many graphs per line based on the total number
+            default_cols = 1 if len(selected_kpis) == 1 else 2
 
-                elif graph_type == "Histogramme":
-                    fig = plot_kpi_histogram(df_site, selected_site, kpi, selected_cells)
-                    st.pyplot(fig)
-
-                elif graph_type == "Graphique à barres":
-                    fig = plot_kpi_bar_chart(df_site, selected_site, kpi, selected_cells)
-                    st.plotly_chart(fig, use_container_width=True)
-                
-                elif graph_type == "Scatter Anomalies":
-                    for kpi in selected_kpis:
-                        fig = plot_kpi_anomaly_scatter(df, selected_site, kpi, selected_cells,
-                            threshold=thresholds.get(kpi),
-                            threshold_direction=threshold_direction.get(kpi),
-                            use_zscore=use_zscore,
-                            zscore_threshold=zscore_threshold
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-
-
-st.markdown("### Générer le rapport d'anomalies")
-uploaded_images = st.file_uploader(
-    "📷 Charger les images PNG exportées", 
-    type=["png"], 
-    accept_multiple_files=True
-)
-
-if uploaded_images and selected_kpis:
-        kpi = selected_kpis[0]
-        threshold = thresholds.get(kpi, None)
-        direction = threshold_direction.get(kpi, None)
-        summary_text = generate_anomaly_summary(df_site, kpi, threshold, direction)
-        image_paths = [img for img in uploaded_images]
-
-        pdf_path = generate_pdf_report(selected_site, kpi, selected_cells, summary_text, image_paths)
-        
-        with open(pdf_path, "rb") as f:
-            st.download_button(
-                label="📥 Télécharger le rapport PDF",
-                data=f,
-                file_name=f"rapport_{selected_site}_{kpi}.pdf",
-                mime="application/pdf"
+            max_cols = min(len(selected_kpis), 4) 
+            cols_per_row = st.number_input(
+                "Nombre de graphes par ligne",
+                min_value=1,
+                max_value=max_cols,
+                value=default_cols,
+                step=1
             )
+            
+
+            # Create lines dynamically    
+            for i in range(0, len(selected_kpis), cols_per_row):
+                row_kpis = selected_kpis[i:i+cols_per_row]
+                cols = st.columns(cols_per_row) 
+
+                for col, kpi in zip(cols, row_kpis):
+                    with col:
+                        st.markdown(f"### 📈 {kpi}")
+                
+                
+                        if graph_type == "Graphique temporel":
+                            fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi, None), threshold_direction=threshold_direction.get(kpi, None), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
+                            st.plotly_chart(fig, use_container_width=True)
+
+                        elif graph_type == "Histogramme":
+                            fig = plot_kpi_histogram(df_site, selected_site, kpi, selected_cells)
+                            st.pyplot(fig)
+
+                        elif graph_type == "Graphique à barres":
+                            fig = plot_kpi_bar_chart(df_site, selected_site, kpi, selected_cells)
+                            st.plotly_chart(fig, use_container_width=True)
+                        
+                        elif graph_type == "Scatter Anomalies":
+                            for kpi in selected_kpis:
+                                fig = plot_kpi_anomaly_scatter(df, selected_site, kpi, selected_cells,
+                                    threshold=thresholds.get(kpi),
+                                    threshold_direction=threshold_direction.get(kpi),
+                                    use_zscore=use_zscore,
+                                    zscore_threshold=zscore_threshold
+                                )
+                                st.plotly_chart(fig, use_container_width=True)
