@@ -11,6 +11,9 @@ from anomaly_detector import load_threshold_config, save_threshold_config
 threshold_config = load_threshold_config()
 
 # ----------- Config -----------
+
+os.environ["STREAMLIT_SERVER_FILE_WATCHER_TYPE"] = "none"
+
 def set_page_config():
     st.set_page_config(
         page_title="Analyse KPI 4G", 
@@ -24,10 +27,13 @@ st.title("Analyse des Performances Radio 2G/3G/4G")
 
 # Image of stadium
 current_dir = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(current_dir, "img", "stade_casa.png")
+image_path = os.path.join(current_dir, "static", "stade_casa.png")
 col_img = st.columns([2, 6, 2]) 
 with col_img[1]: 
-    st.image("img/stade_casa.png", caption="Stade MV Casablanca")
+    if os.path.exists(image_path):
+        st.image(image_path, caption="Stade MV Casablanca")
+    else:
+        st.warning(f"Image introuvable : {image_path}")
 
 # Layout principal
 left_col, right_col = st.columns([1, 3])
