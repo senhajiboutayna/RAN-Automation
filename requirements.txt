@@ -6,3 +6,6 @@ matplotlib
 reportlab
 openpyxl
 scikit-learn
+tempfile
+json
+os

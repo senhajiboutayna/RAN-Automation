@@ -31,13 +31,19 @@ The tool chosen for automation is a dashboard developed with **Streamlit**. It a
 
 ## 🚀 Getting Started
 
-### 1️⃣ Clone the Repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/senhajiboutayna/RAN-Automation.git
 cd RAN-Automation
 ```
 
-### 2️⃣ Open the application
+### 2. Installer les dépendances
+```bash
+pip install -r requirements.txt
+```
+
+
+### 3. Open the application
 ```bash
 streamlit run dashboard.py
 ```
