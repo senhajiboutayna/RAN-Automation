@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from preprocessing import clean_data
 from graph_generator import plot_kpi_time_series, plot_kpi_histogram, plot_dual_axis_kpi_time_series, plot_kpi_bar_chart, plot_kpi_anomaly_scatter
@@ -22,9 +23,11 @@ set_page_config()
 st.title("Analyse des Performances Radio 2G/3G/4G")
 
 # Image of stadium
+current_dir = os.path.dirname(os.path.abspath(__file__))
+image_path = os.path.join(current_dir, "img", "stade_casa.png")
 col_img = st.columns([2, 6, 2]) 
 with col_img[1]: 
-    st.image("img/Stade_casa.png", caption="Stade MV Casablanca")
+    st.image("img/stade_casa.png", caption="Stade MV Casablanca")
 
 # Layout principal
 left_col, right_col = st.columns([1, 3])
