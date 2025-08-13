@@ -1,10 +1,10 @@
 {
     "RRC Setup Fail": {
-        "threshold": 30.0,
+        "threshold": 0.0,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "CDR_DDRX (%) LH": {
-        "threshold": 1,
+        "threshold": 1.0,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "RRC_Succes_Rate": {
@@ -76,6 +76,10 @@
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     },
     "Active User": {
+        "threshold": 0.0,
+        "direction": "Maximum \u00e0 ne pas d\u00e9passer"
+    },
+    "UL User throughput": {
         "threshold": 0.0,
         "direction": "Maximum \u00e0 ne pas d\u00e9passer"
     }

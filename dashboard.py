@@ -22,9 +22,9 @@ set_page_config()
 st.title("Analyse des Performances Radio 2G/3G/4G")
 
 # Image of stadium
-col_img = st.columns([2, 6, 1]) 
+col_img = st.columns([2, 6, 2]) 
 with col_img[1]: 
-    st.image("img/Stade_MV_Casablanca.jpg", caption="Stade MV Casablanca")
+    st.image("img/Stade_casa.png", caption="Stade MV Casablanca")
 
 # Layout principal
 left_col, right_col = st.columns([1, 3])
