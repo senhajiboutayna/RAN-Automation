@@ -133,10 +133,6 @@ with left_col:
                 
                 save_threshold_config(threshold_config)
             
-            use_zscore = st.checkbox("📉 Détection Z-score", value=False)
-            zscore_threshold = None
-            if use_zscore:
-                zscore_threshold = st.slider("Seuil Z-score", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
 
         except Exception as e:
             st.error(f"Erreur lors du traitement du fichier : {e}")
@@ -180,7 +176,7 @@ with right_col:
                 
                 
                         if graph_type == "Graphique temporel":
-                            fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi, None), threshold_direction=threshold_direction.get(kpi, None), use_zscore=use_zscore, zscore_threshold=zscore_threshold)
+                            fig = plot_kpi_time_series(df, selected_site, kpi, selected_cells, y_range=custom_y_range, threshold=thresholds.get(kpi, None), threshold_direction=threshold_direction.get(kpi, None))
                             st.plotly_chart(fig, use_container_width=True)
 
                         elif graph_type == "Histogramme":
@@ -195,8 +191,6 @@ with right_col:
                             for kpi in selected_kpis:
                                 fig = plot_kpi_anomaly_scatter(df, selected_site, kpi, selected_cells,
                                     threshold=thresholds.get(kpi),
-                                    threshold_direction=threshold_direction.get(kpi),
-                                    use_zscore=use_zscore,
-                                    zscore_threshold=zscore_threshold
+                                    threshold_direction=threshold_direction.get(kpi)
                                 )
                                 st.plotly_chart(fig, use_container_width=True)
